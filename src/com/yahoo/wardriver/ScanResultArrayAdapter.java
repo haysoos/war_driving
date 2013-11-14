@@ -23,7 +23,19 @@ public class ScanResultArrayAdapter extends ArrayAdapter<ScanResult> {
 		RelativeLayout v = (RelativeLayout) vi.inflate(R.layout.scan_result_listview_item, null);
 		ScanResult scanResult = this.getItem(position);
 		TextView tvScanResult = (TextView) v.findViewById(R.id.tvScanResult);
-		tvScanResult.setText(scanResult.toString());
+		StringBuilder sb = new StringBuilder();
+		sb.append((position + 1));
+		sb.append(". BSSID:");
+		sb.append(scanResult.BSSID);
+		sb.append("\nSSID:");
+		sb.append(scanResult.SSID);
+		sb.append(", level: ");
+		sb.append(scanResult.level);
+		sb.append(", frequency:");
+		sb.append(scanResult.frequency);
+		sb.append(", timestamp: ");
+		sb.append(scanResult.timestamp);
+		tvScanResult.setText(sb.toString());
 
 		return v;
 	}

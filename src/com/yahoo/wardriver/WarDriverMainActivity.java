@@ -1,6 +1,8 @@
 package com.yahoo.wardriver;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import android.app.Activity;
@@ -83,9 +85,45 @@ public class WarDriverMainActivity extends Activity {
 	class WifiReceiver extends BroadcastReceiver {
 		public void onReceive(Context c, Intent intent) {
 			wifiList = mainWifi.getScanResults();
+			removeDuplicateSSIDForEachBSSID(wifiList);
+			Collections.sort(wifiList, new Comparator<ScanResult>() {
+
+				@Override
+				public int compare(ScanResult lhs, ScanResult rhs) {
+					return (rhs.level - lhs.level);
+				}
+				
+			});
 			arrayAdapter.clear();
 			arrayAdapter.addAll(wifiList);
 			arrayAdapter.notifyDataSetChanged();
+		}
+
+		private void removeDuplicateSSIDForEachBSSID(List<ScanResult> wifiList) {
+			Collections.sort(wifiList, new Comparator<ScanResult>() {
+
+				@Override
+				public int compare(ScanResult lhs, ScanResult rhs) {
+					return lhs.BSSID.compareTo(rhs.BSSID);
+				}
+				
+			});
+			
+			String tempBssid = "";
+			List<Integer> remove = new ArrayList<Integer>(40);
+			for (int i=0; i < wifiList.size(); i++) {
+				if (!wifiList.get(i).BSSID.equals(tempBssid)) {
+					tempBssid = wifiList.get(i).BSSID;
+				} else {
+					remove.add(i);
+				}
+			}
+			
+			for (int i : remove) {
+				wifiList.remove(i);
+				Toast.makeText(getApplicationContext(), "removing index " + i, Toast.LENGTH_SHORT).show();
+			}
+			
 		}
 	}
 
