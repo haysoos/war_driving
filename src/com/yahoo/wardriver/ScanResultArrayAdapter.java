@@ -30,7 +30,7 @@ public class ScanResultArrayAdapter extends ArrayAdapter<ScanResult> {
 		sb.append("\nSSID:");
 		sb.append(scanResult.SSID);
 		sb.append(", level: ");
-		sb.append(scanResult.level);
+		sb.append(scanResult.level + 100);
 		sb.append(", frequency:");
 		sb.append(scanResult.frequency);
 		sb.append(", timestamp: ");

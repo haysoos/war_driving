@@ -85,6 +85,7 @@ public class WarDriverMainActivity extends Activity {
 	class WifiReceiver extends BroadcastReceiver {
 		public void onReceive(Context c, Intent intent) {
 			wifiList = mainWifi.getScanResults();
+			removeFrequenciesGreaterThan5GHz(wifiList);
 			removeDuplicateSSIDForEachBSSID(wifiList);
 			Collections.sort(wifiList, new Comparator<ScanResult>() {
 
@@ -99,6 +100,20 @@ public class WarDriverMainActivity extends Activity {
 			arrayAdapter.notifyDataSetChanged();
 		}
 
+		private void removeFrequenciesGreaterThan5GHz(List<ScanResult> wifiList) {
+			List<Integer> remove = new ArrayList<Integer>(80);
+			
+			for (int i=0; i < wifiList.size(); i++) {
+				if (wifiList.get(i).frequency > 5000) {
+					remove.add(i);
+				}
+			}
+			
+			for (int i=remove.size() - 1 ; i>=0; i--) {
+				wifiList.remove(remove.get(i).intValue());
+			}
+		}
+
 		private void removeDuplicateSSIDForEachBSSID(List<ScanResult> wifiList) {
 			Collections.sort(wifiList, new Comparator<ScanResult>() {
 
@@ -110,20 +125,38 @@ public class WarDriverMainActivity extends Activity {
 			});
 			
 			String tempBssid = "";
-			List<Integer> remove = new ArrayList<Integer>(40);
+			List<Integer> remove = new ArrayList<Integer>(80);
 			for (int i=0; i < wifiList.size(); i++) {
-				if (!wifiList.get(i).BSSID.equals(tempBssid)) {
+				if (!areMacAddressesEquals(wifiList.get(i), tempBssid)) {
 					tempBssid = wifiList.get(i).BSSID;
 				} else {
 					remove.add(i);
 				}
 			}
 			
-			for (int i : remove) {
-				wifiList.remove(i);
-				Toast.makeText(getApplicationContext(), "removing index " + i, Toast.LENGTH_SHORT).show();
+			for (int i=remove.size() - 1 ; i>=0; i--) {
+				Toast.makeText(getApplicationContext(), "removing " + wifiList.get(remove.get(i)).SSID, Toast.LENGTH_SHORT).show();
+				wifiList.remove(remove.get(i).intValue());
+			}
+		}
+
+		private boolean areMacAddressesEquals(ScanResult scanResult1, String bssid2) {
+			
+			if (bssid2 == null || bssid2.isEmpty()) {
+				return false;
 			}
 			
+			String mac1 = getMacFromBssid(scanResult1.BSSID);
+			String mac2 = getMacFromBssid(bssid2);
+			
+			return mac1.equals(mac2);
+		}
+
+		private String getMacFromBssid(String bssid) {
+			
+			int lastIndexOf = bssid.lastIndexOf(':');
+			String mac = bssid.substring(0, lastIndexOf);
+			return mac;
 		}
 	}
 
