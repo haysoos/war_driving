@@ -93,8 +93,7 @@ public class WarDriverMainActivity extends Activity {
 			try {
 				fos = new FileOutputStream(logFile, true);
 				
-				List<ScanResult> scanResults = mainWifi.getScanResults();
-				String string = spinner.getSelectedItem().toString() + "," + Arrays.deepToString(scanResults.toArray(new ScanResult[scanResults.size()])) + System.getProperty("line.separator");
+				String string = formatScanResults(mainWifi.getScanResults());
 				fos.write(string.getBytes());
 				Toast.makeText(getApplicationContext(), "Successfully Saved to wifi_routers.txt", Toast.LENGTH_SHORT).show();
 				
@@ -116,6 +115,39 @@ public class WarDriverMainActivity extends Activity {
 			
 		}
 		
+	}
+
+	private String formatScanResults(List<ScanResult> scanResults) {
+		
+		StringBuilder sb = new StringBuilder();
+		
+		for (ScanResult s : scanResults) {
+			sb.append(System.getProperty("line.separator"));
+			sb.append(spinner.getSelectedItem().toString());
+			sb.append(',');
+			sb.append(" MAC: ");
+			sb.append(getMacFromBssid(s.BSSID));
+			sb.append(',');
+			sb.append(" BSSID: ");
+			sb.append(s.BSSID);
+			sb.append(',');
+			sb.append(" SSID: ");
+			sb.append(s.SSID);
+			sb.append(',');
+			sb.append(" Level: ");
+			sb.append((s.level + 100));
+			sb.append(',');
+			sb.append(" Frequency: ");
+			sb.append(s.frequency);
+			sb.append(',');
+			sb.append(" Timestamp: ");
+			sb.append(s.timestamp);
+			sb.append(',');
+			sb.append(" Capabilities: ");
+			sb.append(s.capabilities);
+		}
+		
+		return  sb.toString();
 	}
 	
 	private void checkStateOfExternalStorage() {
@@ -244,13 +276,12 @@ public class WarDriverMainActivity extends Activity {
 			
 			return mac1.equals(mac2);
 		}
-
-		private String getMacFromBssid(String bssid) {
-			
-			int lastIndexOf = bssid.lastIndexOf(':');
-			String mac = bssid.substring(0, lastIndexOf);
-			return mac;
-		}
 	}
 
+	public static String getMacFromBssid(String bssid) {
+		
+		int lastIndexOf = bssid.lastIndexOf(':');
+		String mac = bssid.substring(0, lastIndexOf);
+		return mac;
+	}
 }
