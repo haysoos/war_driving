@@ -1,6 +1,11 @@
 package com.yahoo.wardriver;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -13,12 +18,15 @@ import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 public class WarDriverMainActivity extends Activity {
@@ -29,6 +37,10 @@ public class WarDriverMainActivity extends Activity {
 	public List<ScanResult> wifiList = new ArrayList<ScanResult>();
 	private ListView lvScanResults;
 	private ScanResultArrayAdapter arrayAdapter;
+	private Spinner spinner;
+	private Button btnSave;
+	private boolean externalStorageAvailable;
+	private boolean externalStorageWriteable;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +57,9 @@ public class WarDriverMainActivity extends Activity {
 		registerReceiver(receiverWifi, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
 		mainWifi.startScan();
 
+		spinner = (Spinner) findViewById(R.id.spinner1);
+		loadSpinner(spinner);
+		
 		btnScan.setOnClickListener(new OnClickListener() {
 
 			@Override
@@ -52,7 +67,85 @@ public class WarDriverMainActivity extends Activity {
 				scanButtonClicked();
 			}
 		});
+		
+		btnSave = (Button) findViewById(R.id.button1);
+		btnSave.setText("Save");
+		
+		btnSave.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				saveToFile();
+			}
+		});
+		
 
+	}
+
+	private void saveToFile() {
+		checkStateOfExternalStorage();
+		
+		if (externalStorageAvailable && externalStorageWriteable) {
+			File downloadDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+			File logFile = new File(downloadDirectory, "wifi_routers.txt");
+			
+			FileOutputStream fos = null;
+			try {
+				fos = new FileOutputStream(logFile, true);
+				
+				List<ScanResult> scanResults = mainWifi.getScanResults();
+				String string = spinner.getSelectedItem().toString() + "," + Arrays.deepToString(scanResults.toArray(new ScanResult[scanResults.size()])) + System.getProperty("line.separator");
+				fos.write(string.getBytes());
+				Toast.makeText(getApplicationContext(), "Successfully Saved to wifi_routers.txt", Toast.LENGTH_SHORT).show();
+				
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				try {
+					if (fos != null) {
+						fos.close();
+					}
+					
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			
+		}
+		
+	}
+	
+	private void checkStateOfExternalStorage() {
+		externalStorageAvailable = false;
+		externalStorageWriteable = false;
+		String state = Environment.getExternalStorageState();
+
+		if (Environment.MEDIA_MOUNTED.equals(state)) {
+		    // We can read and write the media
+		    externalStorageAvailable = externalStorageWriteable = true;
+		} else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+		    // We can only read the media
+		    externalStorageAvailable = true;
+		    externalStorageWriteable = false;
+		} else {
+		    // Something else is wrong. It may be one of many other states, but all we need
+		    //  to know is we can neither read nor write
+		    externalStorageAvailable = externalStorageWriteable = false;
+		}
+	}
+
+	private void loadSpinner(Spinner spinner) {
+		
+		// Array of choices
+		String routers[] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10","11", "12", "13", "14", "15", "16"};
+		
+		// Application of the Array to the Spinner
+		ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(this,   android.R.layout.simple_spinner_item, routers);
+		spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item); // The drop down view
+		spinner.setAdapter(spinnerArrayAdapter);
 	}
 
 	protected void scanButtonClicked() {
@@ -85,8 +178,8 @@ public class WarDriverMainActivity extends Activity {
 	class WifiReceiver extends BroadcastReceiver {
 		public void onReceive(Context c, Intent intent) {
 			wifiList = mainWifi.getScanResults();
-			removeFrequenciesGreaterThan5GHz(wifiList);
-			removeDuplicateSSIDForEachBSSID(wifiList);
+			//removeFrequenciesGreaterThan5GHz(wifiList);
+			//removeDuplicateSSIDForEachBSSID(wifiList);
 			Collections.sort(wifiList, new Comparator<ScanResult>() {
 
 				@Override
